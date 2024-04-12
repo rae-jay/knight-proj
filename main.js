@@ -101,3 +101,132 @@ so... starting with a given coordinate, you get a group of 'possible moves'
 
 
 
+// ex: ( [0,0], [1,2] )
+function knightMoves(startPair, endPair){
+
+    const cellQueue = [];
+    let finished = false;
+
+
+    // to make sure we don't add backtracking to a pathOb chain
+    function pathRepeatCheck(position, pathOb){
+
+        // hit the end without failing, so succeeded
+        if(!pathOb.parent){
+            return true;
+        }
+
+        if(pathOb.parent.position == position){
+            return false;
+        }
+        else{
+            return pathRepeatCheck(position, pathOb.parent);
+        }
+
+    }
+
+    function getPathChain(endCell){
+        // const chain = [endCell.position];
+        let chain = endCell.position.toString();
+
+        function getParent(current){
+            if(current.parent){
+                chain = current.parent.position.toString() + '\n' + chain;
+                // chain.unshift(current.parent.position);
+                getParent(current.parent);
+            }
+        }
+        getParent(endCell);
+
+        chain = 'path to destination:\n' + chain;
+
+        return chain;
+    }
+
+    // parent is another pathOb, position is just [x,y]
+    function createPathOb(position, parent){
+        const pathOb = {};
+        pathOb.parent = parent;
+        pathOb.position = position;
+
+        // this part would change if we check for destination before feeding into createPathOb
+        // console.log(position + '/' + endPair);
+        if(position[0] == endPair[0] && position[1] == endPair[1]){
+            finished = true;
+            return pathOb;
+        }
+        else{
+            console.log('adding ' + position + ' to queue');
+            cellQueue.push(pathOb);
+            return null;
+        }
+    }
+
+    console.log('initiating');
+    createPathOb(startPair, null);
+
+    // let overload = 6;
+    //  && overload < 10
+
+    while(cellQueue.length > 0 && finished == false){
+        console.log('loop start');
+        // overload += 1;
+
+
+        const cell = cellQueue.shift();
+        console.log('checking cell: ');
+        console.log(cell.position);
+
+        const cellLinks = board.getCell(cell.position).links;
+        // console.log('cell links: ');
+        // console.log(cellLinks);
+
+        // k actually i think
+        // HERE, search cellLinks for the destination
+        // and if not found, feed them into createPathOb
+        // and then i just have to do one search upfront for 'is startpair and endpair the same'
+
+        // but uh right now actually just
+        for(const newPath of cellLinks){
+            // console.log('checking coords: ' + newPath);
+            
+            // check for backtracking
+            if(pathRepeatCheck(newPath, cell)){
+
+                // createPathOb only returns the cell if it's at endPosition, otherwise pushes into queue
+                const endCell = createPathOb(newPath, cell);
+
+                if(endCell){
+                    console.log('found the destination you should do something.')
+                    console.log(getPathChain(endCell));
+                    break;
+                }
+
+            }
+            else{
+                console.log(newPath + ' would be backtracking');
+            }
+            
+        }
+
+
+        console.log('loop end');
+        // find all possible links, check for repeats in parent path, createPathObs for links
+    }
+
+
+
+    // if(overload >= 10){
+    //     console.log('ERROR: search failed, overloaded');
+    // }
+
+
+}
+
+
+// knightMoves([0,0],[1,2]);
+
+// knightMoves([0,0],[2,4]);
+// knightMoves([0,0],[4,0]);
+
+knightMoves([0,0],[7,4]);
