@@ -1,3 +1,9 @@
+// This is like. technically not doing the project right because i don't think i exactly 'used a search
+// algorithm'
+// but in my half-assed defense, i couldn't think of a way to do that that seemed even mildly efficient
+// not that this is super efficient either
+// anyway
+
 
 
 const bSize = 8;
