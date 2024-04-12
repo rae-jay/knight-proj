@@ -27,6 +27,7 @@ class Board{
             // -2,-1    -2,1    -1,-2   -1,2    2,-1    2,1     1,-2    1,2
             // which is like, more correct, but only through the negatives
             // so this would have to get mildly overhauled to generate them in-order
+            // (which atm i've decided is more trouble than it's worth)
 
             function newLink(newX, newY){
                 if(newX < bSize && newX >= 0 && 
@@ -34,6 +35,9 @@ class Board{
                     cell.links.push([newX, newY]);
                 }
             }
+
+
+            cell.discovered = false;
 
 
             return cell;
@@ -70,14 +74,19 @@ class Board{
         }
     }
 
+    resetDiscovery(){
+        for(let x = 0; x < bSize; x++){
+            for(let y = 0; y < bSize; y++){
+                this.getCell([x,y]).discovered = false;
+            }
+        }
+    }
 }
 
 
 
 const board = new Board();
 
-
-console.log('new');
 board.printBoard();
 
 /*
@@ -89,20 +98,11 @@ which means that when it's being filled, it fills top-bottom FIRST, then side to
 
 
 
-/*
-PATHFINDING
-
-so... starting with a given coordinate, you get a group of 'possible moves'
-(maybe sort things based on like, the x number, and do the half/half/half search for the tile you're looking for?)
-
-*/
-
-
-
-
-
 // ex: ( [0,0], [1,2] )
 function knightMoves(startPair, endPair){
+    // this is just for my benefit
+    let loopCount = 0;
+
 
     const cellQueue = [];
     let finished = false;
@@ -125,6 +125,19 @@ function knightMoves(startPair, endPair){
 
     }
 
+    // to check that we haven't already pathed to this tile
+    function pathShortestCheck(position){
+        const cell = board.getCell(position);
+        if(!cell.discovered){
+            cell.discovered = true;
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    // to get final path result
     function getPathChain(endCell){
         // const chain = [endCell.position];
         let chain = endCell.position.toString();
@@ -143,6 +156,7 @@ function knightMoves(startPair, endPair){
         return chain;
     }
 
+
     // parent is another pathOb, position is just [x,y]
     function createPathOb(position, parent){
         const pathOb = {};
@@ -150,7 +164,6 @@ function knightMoves(startPair, endPair){
         pathOb.position = position;
 
         // this part would change if we check for destination before feeding into createPathOb
-        // console.log(position + '/' + endPair);
         if(position[0] == endPair[0] && position[1] == endPair[1]){
             finished = true;
             return pathOb;
@@ -164,13 +177,12 @@ function knightMoves(startPair, endPair){
 
     console.log('initiating');
     createPathOb(startPair, null);
+    // don't like doing this bit manually but for now, to set discovery of start tile
+    pathShortestCheck(startPair);
 
-    // let overload = 6;
-    //  && overload < 10
 
     while(cellQueue.length > 0 && finished == false){
         console.log('loop start');
-        // overload += 1;
 
 
         const cell = cellQueue.shift();
@@ -181,17 +193,12 @@ function knightMoves(startPair, endPair){
         // console.log('cell links: ');
         // console.log(cellLinks);
 
-        // k actually i think
-        // HERE, search cellLinks for the destination
-        // and if not found, feed them into createPathOb
-        // and then i just have to do one search upfront for 'is startpair and endpair the same'
 
-        // but uh right now actually just
         for(const newPath of cellLinks){
             // console.log('checking coords: ' + newPath);
             
             // check for backtracking
-            if(pathRepeatCheck(newPath, cell)){
+            if(pathRepeatCheck(newPath, cell) && pathShortestCheck(newPath)){
 
                 // createPathOb only returns the cell if it's at endPosition, otherwise pushes into queue
                 const endCell = createPathOb(newPath, cell);
@@ -201,25 +208,19 @@ function knightMoves(startPair, endPair){
                     console.log(getPathChain(endCell));
                     break;
                 }
-
             }
             else{
-                console.log(newPath + ' would be backtracking');
+                // console.log(newPath + ' would be backtracking');
             }
             
         }
 
-
+        loopCount += 1;
         console.log('loop end');
-        // find all possible links, check for repeats in parent path, createPathObs for links
     }
 
-
-
-    // if(overload >= 10){
-    //     console.log('ERROR: search failed, overloaded');
-    // }
-
+    console.log('total loops: ' + loopCount);
+    board.resetDiscovery();
 
 }
 
